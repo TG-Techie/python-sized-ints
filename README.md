@@ -9,7 +9,7 @@ from sized_ints import *
 
 # you can make sized number that have limited values ranges
 a = u8(127)
-# they can be added to plain ints or other ints of the same size
+# they can be used as normal with plain ints or other ints of the same size
 b = a + u8(5)
 b -= 5 # plain ints are best used with +=, *=, etc (see note 1)
 
