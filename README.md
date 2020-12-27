@@ -1,6 +1,6 @@
 # Sized Ints
 
-sized ints brings fixed width integers to python! Whether bit packing, bit manipulating, or prepareing code to interface with mmio, sized ints makes swizzling and unswizzling bits a breeze.
+sized ints brings fixed width integers to python! Whether bit packing, bit manipulating, or preparing code to interface with mmio, sized ints makes swizzling and unswizzling bits a breeze.
 
 > __Note:__ This project is under development, there may be:
 - **minor** api changes, while this is not expected it is possible
