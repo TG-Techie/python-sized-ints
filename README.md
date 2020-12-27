@@ -1,12 +1,10 @@
 # Sized Ints
-----
 
 sized ints brings fixed width integers to python! Whether bit packing, bit manipulating, or prepareing code to interface with mmio, sized ints makes swizzling and unswizzling bits a breeze.
 
 > __Note:__ This project is under development, there may be:
-- minor api changes, while this is not expected it is possible
+- **minor** api changes, while this is not expected it is possible
 - changes in the under lying implementation
-
 
 ## Example
 ```python
@@ -25,33 +23,29 @@ c = u16(b) + u16(2)
 # but you can always cast back to plain ints ('InfinInts')
 plain = int(b)
 
-# TODO: add more examples, etc
 ```
 
 ### What sizes are there?
 Any sizes cpython can represent.
 ```python
-# for convenience you can import all the baked ints along with all of its helper
+# for convenience you can import all the baked in ints with the sized_ints module
 from sized_ints import *
 print(dir())
 
-# if you need specific other sixes you can import from `sized`
+# if you need additional, specific sizes you can import them from `sized` after importing sized_ints
 from sized_ints import *
 from sized import u20, u1132, i27
-```
-```python
-# however if you do not know what sizes you'll need ahead of time that's fine,
-#   you can choose ints' sizes at 'runtime' using `Signed` and `Unsigned`
-from sized_ints import Unsigned, SomeWidth
 
-def new_user_sized_int() -> Unsigned[SomeWidth]:
+# however if you do not know what sizes you'll need ahead of time, that's fine.
+#   you can choose int sizes at 'runtime' using the `Signed` and `Unsigned` types
+def new_user_sized_int() -> Type[Unsigned]:
     width = int(input('width of new sized int: ')) # for some reason?
     ux = Unsigned[width] # get the  new Unsigned size type
     return ux
 ```
 ##### Baked in sizes:
-- u0-u16, u32, u32, u64, u128, u256, u512, u1024
-- i1-i16, i32, i32, i64, i128, i256, i512, i1024
+- u0, u1, u4, u8, u16, u32, u64, u128, u256, u512, u1024
+- i1, i4, i8, u16, i128, i256, i512, i1024
 
 ## Overflow
 By default overflow is off for all sized ints
@@ -72,23 +66,24 @@ with overflow(True):
 These contexts will only affect your current scope (so functions you call aren't affected) and they can be nested.
 ```python
 
-def somefunc():
+def some_func():
     # needs no overflow errors (we can rely on the default)
-    print(f"in somefunc, {overflow.ison()=}")
+    print(f"some_func inside, {overflow.ison()=}")
     assert u8(103) == u8(232) + u8(127)
 
 with overflow(True):
     try: u8(255) + 1
     except: print('overflow caught')
 
-    print(f"outside of somefunc, {overflow.ison()=}")
+    print(f"some_func before, {overflow.ison()=}")
     somefunc()
-    print(f"outside of somefunc, {overflow.ison()=}")
+    print(f"some_func after, {overflow.ison()=}")
 ```
 
 ### Tips and Tricks:
 ```python
 # unsigned ints can be packed and unpacked by widths
+... # documentation needed
 ```
 ```python
 # overflow contexts can also be used inline for single statements
@@ -96,3 +91,14 @@ with overflow(True):
     x = u3(1)
     with overflow(False): x += 200
 ```
+
+### Issues and Features:
+- __Bugs__: If you find a bug/issue, please file an issue on Github with an example and explanation.
+- __Features__: If you have a proposed feature please either fork the [python-sized-ints repo](https://github.com/TG-Techie/python-sized-ints) and make a pull request with the code or without code make an issue to discuss the possible feature.
+
+> __Todos:__ help welcome
+- extend the documentation to cover `.twos()`, `.as_signed/as_unsigned()`, `Unsigned.pack()`, `Unsigned.unpack()`, `tri`, `utri`, etc
+- write more tests (:sweat_smile:)
+- switch from auto generated dunder/magic methods to hand rolled methods in `_SizedInt`
+- write a `hex()` function to express the size of the int (like `bin()`)
+- and a non sized `uint` type that is always >= 0

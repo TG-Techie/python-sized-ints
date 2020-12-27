@@ -11,10 +11,12 @@ import functools
 # TODO: add check to make sure a _bit_width_ can de represented by the system, ie log2(sys.maxsize) = max _bit_width_
 # TODO: add uint for whole numbers
 
+__version__ = '0.1.0'
+
 __all__ = [ # uses a list so the auto genreated uX can be exported
     'Unsigned', 'Signed', 'sized',
     'overflow', 'OverflowError',
-    'tri', 'utri', 'SomeWidth',
+    'tri', 'utri',
     'bin', 'bitwidth'
 ]
 
@@ -215,7 +217,7 @@ class Signed(type):
 
         name = f'i{width}'
         if name in Signed._signed_int_types_:
-            return Signed._signed_int_types_[name]
+            raise TypeError(f"{name} already exists and cannot be created twice, use Signed[{width}]")
         else:
             self = super().__new__(cls,
                 name,
@@ -234,10 +236,12 @@ class Signed(type):
             return self
 
     def __class_getitem__(cls, width: int) -> type:
-        if isinstance(width, int):
-            return cls(width)
-        else:
-            return typing._GenericAlias(Unsigned, (width,))
+        name = f"i{width}"
+        existing = cls._signed_int_types_
+        if name not in existing:
+            existing[name] = cls(width)
+        return existing[name]
+
 
     def __repr__(self:type) -> str:
         return f"<class '{self.__name__}'>"
@@ -254,31 +258,35 @@ class Unsigned(type):
             raise TypeError(f"uints cannot have negative width")
 
         name = f'u{width}'
+        # check that this is the first time this width is being made
         if name in Unsigned._unsigned_int_types_:
-            return Unsigned._unsigned_int_types_[name]
-        else:
-            self = super().__new__(cls,
-                name,
-                (_UnsignedInt,),
-                {
-                    '_bit_width_' : width,
-                    # '_sized_auto_gened_' : False,
-                    '_max_value_' : int(2**width - 1),
-                    '_min_value_' : int(0),
+            raise TypeError(f"{name} already exists and cannot be created twice, use Unsigned[{width}]")
 
-                    '_clip_mod_'    :  int(2**(width)),
-                    '_clip_offset_' :  int(0),
-                }
-            )
-            Unsigned._unsigned_int_types_[name] = self
-            return self
+        self = super().__new__(cls,
+            name,
+            (_UnsignedInt,),
+            {
+                '_bit_width_' : width,
+
+                '_max_value_' : int(2**width - 1),
+                '_min_value_' : int(0),
+
+                '_clip_mod_'    :  int(2**(width)),
+                '_clip_offset_' :  int(0),
+            }
+        )
+        Unsigned._unsigned_int_types_[name] = self
+        return self
 
     def __class_getitem__(cls, width: int) -> type:
-        return cls(width)
+        name = f"u{width}"
+        existing = cls._unsigned_int_types_
+        if name not in existing:
+            existing[name] = cls(width)
+        return existing[name]
 
     def __repr__(self:type) -> str:
         return f"<class '{self.__name__}'>"
-        # return f"<class '{'sized.'*self._sized_auto_gened_}{self.__name__}'>"
 
     @staticmethod
     def pack(*nums:'Unsigned') -> 'Unsigned':
@@ -357,7 +365,7 @@ class Unsigned(type):
 
         if not isinstance(source, _UnsignedInt) and ... in into:
             raise ValueError(
-                f"... can only be used with unsigned inst, found {intcls}"
+                f"... can only be used with unsigned ints, got {intcls}"
             )
 
         chunks = []
@@ -373,9 +381,10 @@ class Unsigned(type):
 
 class overflow():
 
-    # is invisible in locals() call. can only geth throught sys._getframe()
+
     _local_flag_name = '..sized in overflow flags..'
-    # is visble # _flag_name = '__sized_ints_overflow_local_flags_DO_NOT_DELTE'
+    # this is the key used for
+    # it is invisible in locals() call.
 
     def __init__(self, flag):
         self.flag = flag
@@ -446,13 +455,12 @@ class sized():
                 raise NameError(f"sized ints' names must start with 'i' or 'u', found '{prefix}' in '{name}'")
 
             # find width
-            if body.isnumeric():
+            if body.isnumeric() and '.' not in body:
                 width = int(body)
             else:
                 raise NameError(f"sized ints must have whole number widths, found '{body}'  in '{name}'")
 
             cls = kind(width)
-            # cls._sized_auto_gened_ = True
             return cls
 
 
@@ -472,6 +480,9 @@ class utri(_SizedInt):
     _clip_mod_ = 3
     _clip_offset_ = 0
 
+
+# setup the eviroment and baked in types for importing
+
 for width in [1, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
     ucls = Unsigned(width)
     __all__.append(ucls.__name__)
@@ -481,9 +492,7 @@ for width in [1, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
     __all__.append(icls.__name__)
     locals()[icls.__name__] = icls
 
-u0 = Unsigned(0)
+u0 = Unsigned[0]
 __all__.append('u0')
 
 sys.modules['sized'] = sized
-
-SomeWidth = TypeVar('<SomeWidth>', int, _UnsignedInt)
