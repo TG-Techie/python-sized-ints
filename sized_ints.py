@@ -1,4 +1,5 @@
 from typing import *
+import typing
 import sys
 import builtins
 import functools
@@ -13,7 +14,7 @@ import functools
 __all__ = [ # uses a list so the auto genreated uX can be exported
     'Unsigned', 'Signed', 'sized',
     'overflow', 'OverflowError',
-    'tri', 'utri',
+    'tri', 'utri', 'SomeWidth',
     'bin', 'bitwidth'
 ]
 
@@ -136,25 +137,27 @@ class _SizedInt(int):
 
     # generate operand methods
     for op in _uniops:
-        exec(f"""def {op}(self):
+        exec(f'''def {op}(self):
                     return type(self)(int(self).{op}())
                     #cls = type(self)
                     #return cls(int(self).{op}())
-             """)
+             ''')
     else:
         del op
 
     for op in _binops:
-        exec(f"""def {op}(self, other):
+        exec(f'''def {op}(self, other):
                     cls = type(self)
                     if type(other) not in (cls, int):
                         raise  TypeError(f"cannot {_binop_symbol.get(op, op.strip('_'))} a '{{type(other).__name__}}' to '{{cls.__name__}}', "\
                             f"be sure to cast using `{{cls.__name__}}.tryfrom({{other}})`"
                         )
                     return cls(int(self).{op}(int(other)))
-             """)
+             ''')
     else:
         del op
+
+
 
 class _SignedInt(_SizedInt):
 
@@ -230,6 +233,12 @@ class Signed(type):
             Signed._signed_int_types_[name] = self
             return self
 
+    def __class_getitem__(cls, width: int) -> type:
+        if isinstance(width, int):
+            return cls(width)
+        else:
+            return typing._GenericAlias(Unsigned, (width,))
+
     def __repr__(self:type) -> str:
         return f"<class '{self.__name__}'>"
         # return f"<class '{'sized.'*self._sized_auto_gened_}{self.__name__}'>"
@@ -264,6 +273,9 @@ class Unsigned(type):
             Unsigned._unsigned_int_types_[name] = self
             return self
 
+    def __class_getitem__(cls, width: int) -> type:
+        return cls(width)
+
     def __repr__(self:type) -> str:
         return f"<class '{self.__name__}'>"
         # return f"<class '{'sized.'*self._sized_auto_gened_}{self.__name__}'>"
@@ -276,6 +288,12 @@ class Unsigned(type):
         u7(0b1010011).
         """
         global Unsigned
+
+        # format input
+        # if the only input was a single iterable use that
+        if len(nums) == 1 and hasattr(nums[0], '__iter__'):
+            nums = tupel(nums[0])
+
         val = 0
         width = 0
         for index, num in enumerate(nums):
@@ -287,6 +305,7 @@ class Unsigned(type):
             )
             val = (val << numcls._bit_width_) + int(num)
             width += numcls._bit_width_
+            #print(width, bin(Unsigned(width)(val)))
         return Unsigned(width)(val)
 
     @staticmethod
@@ -352,7 +371,6 @@ class Unsigned(type):
 
         return tuple(chunks)
 
-#@singleton
 class overflow():
 
     # is invisible in locals() call. can only geth throught sys._getframe()
@@ -454,7 +472,7 @@ class utri(_SizedInt):
     _clip_mod_ = 3
     _clip_offset_ = 0
 
-for width in [*range(1, 16), 16, 32, 64, 128, 256, 512, 1024]:
+for width in [1, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
     ucls = Unsigned(width)
     __all__.append(ucls.__name__)
     locals()[ucls.__name__] = ucls
@@ -467,3 +485,5 @@ u0 = Unsigned(0)
 __all__.append('u0')
 
 sys.modules['sized'] = sized
+
+SomeWidth = TypeVar('<SomeWidth>', int, _UnsignedInt)

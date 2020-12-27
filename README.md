@@ -3,6 +3,11 @@
 
 sized ints brings fixed width integers to python! Whether bit packing, bit manipulating, or prepareing code to interface with mmio, sized ints makes swizzling and unswizzling bits a breeze.
 
+> __Note:__ This project is under development, there may be:
+- minor api changes, while this is not expected it is possible
+- changes in the under lying implementation
+
+
 ## Example
 ```python
 from sized_ints import *
@@ -11,7 +16,7 @@ from sized_ints import *
 a = u8(127)
 # they can be used as normal with plain ints or other ints of the same size
 b = a + u8(5)
-b -= 5 # plain ints are best used with +=, *=, etc (see note 1)
+b -= 5 # plain ints are best used with +=, *=, etc
 
 # but you cannot add ints of different signs and widths
 c = b + u16(2) # raises TypeError (b's width < u16)
@@ -23,25 +28,26 @@ plain = int(b)
 # TODO: add more examples, etc
 ```
 
-
-
 ### What sizes are there?
 Any sizes cpython can represent.
 ```python
-# for connivence you can import all the baked ints along with all of its helper
+# for convenience you can import all the baked ints along with all of its helper
 from sized_ints import *
 print(dir())
 
 # if you need specific other sixes you can import from `sized`
 from sized_ints import *
 from sized import u20, u1132, i27
-
+```
+```python
 # however if you do not know what sizes you'll need ahead of time that's fine,
 #   you can choose ints' sizes at 'runtime' using `Signed` and `Unsigned`
+from sized_ints import Unsigned, SomeWidth
 
-width = int(input('width: ')) # for some reason?
-ux = Unsigned(width)
-number = ux(0)
+def new_user_sized_int() -> Unsigned[SomeWidth]:
+    width = int(input('width of new sized int: ')) # for some reason?
+    ux = Unsigned[width] # get the  new Unsigned size type
+    return ux
 ```
 ##### Baked in sizes:
 - u0-u16, u32, u32, u64, u128, u256, u512, u1024
@@ -82,11 +88,11 @@ with overflow(True):
 
 ### Tips and Tricks:
 ```python
+# unsigned ints can be packed and unpacked by widths
+```
+```python
 # overflow contexts can also be used inline for single statements
 with overflow(True):
     x = u3(1)
     with overflow(False): x += 200
 ```
-
-#### Notes:
-1. functionality detail: size-ed-ness is only preserved when the 'magic' or 'dunder' method is called on a previously sized number
