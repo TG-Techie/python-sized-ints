@@ -73,8 +73,8 @@ def some_func():
     assert u8(232) + u8(127) == u8(103)
 
 with overflow(True):
-    try: u8(255) + 1
-    except: print('overflow caught')
+    try: x = u8(255) + 3
+    except: print('\toverflow caught')
 
     assert overflow.ison() is True
     some_func()

@@ -95,7 +95,7 @@ class _SizedInt(int):
     _clip_mod_ = None
     _clip_offset_ = None
 
-    def __new__(cls: Type[T], value=0) -> T:
+    def __new__(cls: Type[T], value=0, _check_overflow=False) -> T:
         global int, overflow
 
         if __debug__: # make sure that _nest_level of ison is correct
@@ -104,7 +104,9 @@ class _SizedInt(int):
             # .ison() reaches out too few levels
         # perform normal casts from str, float etc
 
-        if overflow.ison(_nest_level=1):
+        check_overflow = overflow.ison(_nest_level=1) or _check_overflow
+        # print(f"{value=}, {cls=}, {check_overflow=}")
+        if check_overflow and _check_overflow:
             cls._raise_on_overflow(value)
         else:
             value = cls._clip_overflow(value)
@@ -115,11 +117,15 @@ class _SizedInt(int):
         return f"{cls.__name__}({int(self)})"
         #return f"{'sized.'*cls._sized_auto_gened_}{cls.__name__}({int(self)})"
 
+    def __init__(self, *_, **__):
+        super().__init__()
+
     @classmethod
     def _raise_on_overflow(cls: Type[T], src: object) -> T: # may raise
         global _SizedInt
         if cls is _SizedInt:
             raise NotImplementedError("do not use a raw _SizedInt")
+        # print(f"{src=}, {src < cls._min_value_ or src > cls._max_value_=}, {src < cls._min_value_=}, {src > cls._max_value_=}")
         if src < cls._min_value_ or src > cls._max_value_:
             raise OverflowError(
                  f"{cls} ints can only represent values >= "
@@ -140,9 +146,10 @@ class _SizedInt(int):
     # generate operand methods
     for op in _uniops:
         exec(f'''def {op}(self):
-                    return type(self)(int(self).{op}())
-                    #cls = type(self)
-                    #return cls(int(self).{op}())
+                    return type(self)(int(self).{op}(),  _check_overflow=overflow.ison(_nest_level=1))
+                    # cls = type(self)
+                    # print(cls)
+                    # return cls(int(self).{op}())
              ''')
     else:
         del op
@@ -154,7 +161,7 @@ class _SizedInt(int):
                         raise  TypeError(f"cannot {_binop_symbol.get(op, op.strip('_'))} a '{{type(other).__name__}}' to '{{cls.__name__}}', "\
                             f"be sure to cast using `{{cls.__name__}}.tryfrom({{other}})`"
                         )
-                    return cls(int(self).{op}(int(other)))
+                    return cls(int(self).{op}(int(other)), _check_overflow=overflow.ison(_nest_level=1))
              ''')
     else:
         del op
