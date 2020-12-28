@@ -89,9 +89,8 @@ with overflow(True):
 ```
 ```python
 # overflow contexts can also be used inline for single statements
-with overflow(True):
-    x = u3(1)
-    with overflow(False): x += 200
+x = u3(1)
+with overflow(True): x += 200 # raises
 ```
 
 ### Issues and Features:
