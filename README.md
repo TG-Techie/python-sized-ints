@@ -98,7 +98,7 @@ with overflow(True):
 - __Bugs__: If you find a bug/issue, please file an issue on Github with an example and explanation.
 - __Features__: If you have a proposed feature please either fork the [python-sized-ints repo](https://github.com/TG-Techie/python-sized-ints) and make a pull request with the code or without code make an issue to discuss the possible feature.
 
-> __Todos:__ help welcome
+#### __Todos:__ help welcome
 - extend the documentation to cover `.twos()`, `.as_signed/as_unsigned()`, `Unsigned.pack()`, `Unsigned.unpack()`, `tri`, `utri`, etc
 - write more tests (:sweat_smile:)
 - switch from auto generated dunder/magic methods to hand rolled methods in `_SizedInt`
