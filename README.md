@@ -76,9 +76,9 @@ with overflow(True):
     try: u8(255) + 1
     except: print('overflow caught')
 
-    print(f"some_func before, {overflow.ison()=}")
+    assert overflow.ison() is True
     some_func()
-    print(f"some_func after, {overflow.ison()=}")
+    assert overflow.ison() is True
 ```
 
 ### Tips and Tricks:

@@ -6,7 +6,6 @@ def some_func():
     assert overflow.ison() is False
     assert u8(232) + u8(127) == u8(103)
 
-
 with overflow(True):
     try: u8(255) + 1
     except: print('overflow caught')

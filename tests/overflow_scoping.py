@@ -1,6 +1,5 @@
 from sized_ints import *
 
-
 def func():
     assert overflow.isoff()
 
