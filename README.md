@@ -67,7 +67,6 @@ with overflow(True):
 ```
 These contexts will only affect your current scope so functions you call aren't affected.
 ```python
-
 def some_func():
     # needs no overflow errors (we can rely on the default)
     assert overflow.ison() is False
