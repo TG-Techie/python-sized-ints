@@ -11,7 +11,7 @@ import functools
 # TODO: add check to make sure a _bit_width_ can de represented by the system, ie log2(sys.maxsize) = max _bit_width_
 # TODO: add uint for whole numbers
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 __all__ = [ # uses a list so the auto genreated uX can be exported
     'Unsigned', 'Signed', 'sized',
