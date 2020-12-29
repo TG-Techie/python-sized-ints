@@ -7,11 +7,12 @@ import functools
 # TODO: write value tests!
 # TODO: call normal int 'InfinInt'?
 # TODO: hand rool ^ and ~ for proper bit manipulation
+# TODO: hand roll all of the operations
 # TODO: consider memoizing seach uXX type based on the value for single existence numbers
 # TODO: add check to make sure a _bit_width_ can de represented by the system, ie log2(sys.maxsize) = max _bit_width_
 # TODO: add uint for whole numbers
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 __all__ = [ # uses a list so the auto genreated uX can be exported
     'Unsigned', 'Signed', 'sized',
@@ -490,7 +491,7 @@ class utri(_SizedInt):
 
 # setup the eviroment and baked in types for importing
 
-for width in [1, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
+for width in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
     ucls = Unsigned(width)
     __all__.append(ucls.__name__)
     locals()[ucls.__name__] = ucls
