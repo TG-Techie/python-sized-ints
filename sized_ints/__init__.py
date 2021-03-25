@@ -202,38 +202,130 @@ class _SizedInt(int):
         return (src + cls._clip_offset_) % cls._clip_mod_ - cls._clip_offset_
 
     @classmethod
-    def tryfrom(cls: Type[T], src: object):  # Result[T, str]
-        raise NotImplementedError(
-            ".tryfrom(...) not implemented, will return an `envly.Result[...]`"
+    def _determine_type_with(cls, other):
+        othercls = type(other)
+        if othercls is int:
+            return cls
+        elif cls._is_signed_ != othercls._is_signed_:
+            raise TypeError(
+                f"cannot add a '{cls.__name__}' to a '{othercls.__name__}', "
+                f"cast to '{cls.__name__}' by `{cls.__name__}({other})`"
+            )
+        return cls if cls._bit_width_ > othercls._bit_width_ else othercls
+
+    # uni ops:
+    __abs__ = __pos__ = lambda self: type(self)(
+        int(self).__abs__(),
+        _check_overflow=overflow.ison(_nest_level=1),
+    )
+
+    __ceil__ = lambda self: type(self)(
+        int(self).__ceil__(),
+        _check_overflow=overflow.ison(_nest_level=1),
+    )
+
+    __floor__ = lambda self: type(self)(
+        int(self).__floor__(),
+        _check_overflow=overflow.ison(_nest_level=1),
+    )
+
+    __invert__ = lambda self: type(self)(
+        int(self) ^ (2 ** self._bit_width_ - 1),
+        _check_overflow=overflow.ison(_nest_level=1),
+    )
+
+    __index__ = lambda self: int(self)
+
+    __neg__ = lambda self: type(self)(
+        -int(self),
+        _check_overflow=overflow.ison(_nest_level=1),
+    )
+
+    __trunc__ = lambda self: type(self)(
+        int(self).__trunc__(),
+        _check_overflow=overflow.ison(_nest_level=1),
+    )
+
+    # logical ops:
+    __eq__ = lambda self, other: int(self) == int(other)
+    __ne__ = lambda self, other: int(self) != int(other)
+    __ge__ = lambda self, other: int(self) >= int(other)
+    __le__ = lambda self, other: int(self) <= int(other)
+    __gt__ = lambda self, other: int(self) > int(other)
+    __lt__ = lambda self, other: int(self) < int(other)
+
+    # binary ops:
+    def __add__(self, other):
+        return self._determine_type_with(other)(
+            int(self) + (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
         )
 
-    # generate operand methods
-    for op in _uniops:
-        exec(
-            f"""def {op}(self):
-                    return type(self)(int(self).{op}(),  _check_overflow=overflow.ison(_nest_level=1))
-                    # cls = type(self)
-                    # print(cls)
-                    # return cls(int(self).{op}())
-             """
+    def __sub__(self, other):
+        return self._determine_type_with(other)(
+            int(self) - (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
         )
-    else:
-        del op
 
-    for op in _binops:
-        exec(
-            f"""def {op}(self, other):
-                    cls = type(self)
-                    # TODO: make able to auto cast for smaller sized of same sign-ed-ness
-                    if type(other) not in (cls, int):
-                        raise  TypeError(f"cannot {_binop_symbol.get(op, op.strip('_'))} a '{{type(other).__name__}}' to '{{cls.__name__}}', "\
-                            f"be sure to cast using `{{cls.__name__}}.tryfrom({{other}})`"
-                        )
-                    return cls(int(self).{op}(int(other)), _check_overflow=overflow.ison(_nest_level=1))
-             """
+    def __mul__(self, other):
+        return self._determine_type_with(other)(
+            int(self) * (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
         )
-    else:
-        del op
+
+    def __truediv__(self, other):
+        return self._determine_type_with(other)(
+            int(self) // (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __pow__(self, other):
+        return self._determine_type_with(other)(
+            int(self) ** (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __mod__(self, other):
+        return self._determine_type_with(other)(
+            int(self) % (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __floordiv__(self, other):
+        return self._determine_type_with(other)(
+            int(self).__floordiv__(int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __lshift__(self, other):
+        return self._determine_type_with(other)(
+            int(self) << (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rshift__(self, other):
+        return self._determine_type_with(other)(
+            int(self) >> (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __and__(self, other):
+        return self._determine_type_with(other)(
+            int(self) & (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __or__(self, other):
+        return self._determine_type_with(other)(
+            int(self) | (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __xor__(self, other):
+        return self._determine_type_with(other)(
+            int(self) ^ (int(other)),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
 
 
 class _SignedInt(_SizedInt):
@@ -244,17 +336,16 @@ class _SignedInt(_SizedInt):
         return self.twos()
 
     def twos(self):
-        global abs
         cls = type(self)
-        self = int(self)
-        assert isinstance(cls, Signed)
-        signbit = u1(1 if self < 0 else 0)
-        body = abs(self)
-        if signbit == 1:
-            val = body - 1  # -1 -> 0 b/c abs(-1) -1 convs back to
-        else:
-            val = body
-        return Unsigned(cls._bit_width_)(signbit << (cls._bit_width_ - 1) + val)
+        ival = int(self)
+
+        sign_bit = 1 if ival < 0 else 0
+
+        body_mask = 2 ** cls._bit_width_ - 1
+
+        return Unsigned[cls._bit_width_](
+            ival if ival >= 0 else (abs(ival) ^ body_mask) + 1
+        )
 
 
 class _UnsignedInt(_SizedInt):
@@ -265,22 +356,36 @@ class _UnsignedInt(_SizedInt):
         return self
 
     def twos(self):
+        """
+        calculate the two's complement of the given value
+        """
         cls = type(self)
-        self = int(self)
-        assert isinstance(cls, Unsigned)
-        signbit = u1(self >> (cls._bit_width_ - 1))
-        body = self & ~(1 << (cls._bit_width_ - 1))
+        uval = int(self)
 
-        if signbit == 1:  # convert from two's
-            val = body + 1  # 0 - > 1 -> 2, 2 -> 3 etc
-        else:
-            val = body
+        lower_bits_mask = (2 ** cls._bit_width_ - 1) >> 1
+        sign_bit_mask = 1 << (cls._bit_width_ - 1)
 
-        return Signed(cls._bit_width_)((0, -1)[signbit] * val)
+        sign_bit = uval & sign_bit_mask
+
+        sign = -1 if sign_bit > 0 else 1
+
+        body = uval & lower_bits_mask
+        body_value = ((body ^ lower_bits_mask) + 1) if sign < 0 else body
+
+        return Signed[cls._bit_width_](sign * body_value)
 
 
-# metaclasses to genrate any width int widths ate runtime
+# metaclasses to genrate any width int at runtime
 class Signed(type):
+
+    # __slots__ = (
+    #     "_bit_width_",
+    #     "_max_value_",
+    #     "_min_value_",
+    #     "_clip_mod_",
+    #     "_clip_offset_",
+    #     "_is_signed_",
+    # )
 
     _signed_int_types_ = {}
 
@@ -306,6 +411,7 @@ class Signed(type):
                     "_min_value_": -int(2 ** (width - 1)),
                     "_clip_mod_": int(2 ** (width)),
                     "_clip_offset_": int(2 ** (width - 1)),
+                    "_is_signed_": True,
                 },
             )
             Signed._signed_int_types_[name] = self
@@ -324,6 +430,15 @@ class Signed(type):
 
 
 class Unsigned(type):
+
+    # __slots__ = (
+    #     "_bit_width_",
+    #     "_max_value_",
+    #     "_min_value_",
+    #     "_clip_mod_",
+    #     "_clip_offset_",
+    #     "_is_signed_",
+    # )
 
     _unsigned_int_types_ = {}
 
@@ -350,6 +465,7 @@ class Unsigned(type):
                 "_min_value_": int(0),
                 "_clip_mod_": int(2 ** (width)),
                 "_clip_offset_": int(0),
+                "_is_signed_": False,
             },
         )
         Unsigned._unsigned_int_types_[name] = self
@@ -366,7 +482,7 @@ class Unsigned(type):
         return f"<class '{self.__name__}'>"
 
     @staticmethod
-    def pack(*nums: "Unsigned") -> "Unsigned":
+    def pack(*nums) -> "Unsigned":
         """
         A function to take several unsigned integes and combine them into
         one larger number. For example Unsigned.pack(u3(0b101), u4(0011)) returns
@@ -377,7 +493,7 @@ class Unsigned(type):
         # format input
         # if the only input was a single iterable use that
         if len(nums) == 1 and hasattr(nums[0], "__iter__"):
-            nums = tuple(nums[0])
+            nums = iter(nums[0])
 
         val = 0
         width = 0
@@ -402,7 +518,6 @@ class Unsigned(type):
         be unpacked, normal ints are assumed to be infinitely 0 padded on the left.
         Additionally adding a ... to the begining of an unpack template (the
         tuple of types) will "absorb" any extra zeros to the left.
-         # (... has additional future functionality planned)
         """
 
         # todo: allow the ... anywhere in the unpack sequence
@@ -457,7 +572,7 @@ class Unsigned(type):
 
 class overflow:
 
-    _local_flag_name = "..sized in overflow flags.."
+    _local_flag_name = "..sized int overflow flags.."
     # this is the key used for
     # it is invisible in locals() call.
 
