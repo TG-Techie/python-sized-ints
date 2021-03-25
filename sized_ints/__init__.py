@@ -310,7 +310,7 @@ class _SizedInt(int):
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
-    def __mod__(self, other):
+    def __rmod__(self, other):
         return self._determine_type_with(other)(
             int(other) % int(self),
             _check_overflow=overflow.ison(_nest_level=1),
