@@ -12,7 +12,7 @@ import functools
 # TODO: add check to make sure a _bit_width_ can de represented by the system, ie log2(sys.maxsize) = max _bit_width_
 # TODO: add uint for whole numbers
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 __all__ = [  # uses a list so the auto genreated uX can be exported
     "Unsigned",
@@ -208,8 +208,9 @@ class _SizedInt(int):
             return cls
         elif cls._is_signed_ != othercls._is_signed_:
             raise TypeError(
-                f"cannot add a '{cls.__name__}' to a '{othercls.__name__}', "
-                f"cast to '{cls.__name__}' by `{cls.__name__}({other})`"
+                f"cannot perform calculations wtih a '{cls.__name__}' and "
+                f"a '{othercls.__name__}',  cast to '{cls.__name__}' "
+                f"by `{cls.__name__}({other})`"
             )
         return cls if cls._bit_width_ > othercls._bit_width_ else othercls
 
@@ -257,73 +258,133 @@ class _SizedInt(int):
     # binary ops:
     def __add__(self, other):
         return self._determine_type_with(other)(
-            int(self) + (int(other)),
+            int(self) + int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __radd__(self, other):
+        return self._determine_type_with(other)(
+            int(other) + int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __sub__(self, other):
         return self._determine_type_with(other)(
-            int(self) - (int(other)),
+            int(self) - int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rsub__(self, other):
+        return self._determine_type_with(other)(
+            int(other) - int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __mul__(self, other):
         return self._determine_type_with(other)(
-            int(self) * (int(other)),
+            int(self) * int(other),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
-    def __truediv__(self, other):
+    def __rmul__(self, other):
         return self._determine_type_with(other)(
-            int(self) // (int(other)),
+            int(other) * int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __pow__(self, other):
         return self._determine_type_with(other)(
-            int(self) ** (int(other)),
+            int(self) ** int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rpow__(self, other):
+        return self._determine_type_with(other)(
+            int(other) ** int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __mod__(self, other):
         return self._determine_type_with(other)(
-            int(self) % (int(other)),
+            int(self) % int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __mod__(self, other):
+        return self._determine_type_with(other)(
+            int(other) % int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __floordiv__(self, other):
         return self._determine_type_with(other)(
-            int(self).__floordiv__(int(other)),
+            int(self) // int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rfloordiv__(self, other):
+        return self._determine_type_with(other)(
+            int(other) // int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __lshift__(self, other):
         return self._determine_type_with(other)(
-            int(self) << (int(other)),
+            int(self) << int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rlshift__(self, other):
+        return self._determine_type_with(other)(
+            int(other) << int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __rshift__(self, other):
         return self._determine_type_with(other)(
-            int(self) >> (int(other)),
+            int(self) >> int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rrshift__(self, other):
+        return self._determine_type_with(other)(
+            int(other) >> int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __and__(self, other):
         return self._determine_type_with(other)(
-            int(self) & (int(other)),
+            int(self) & int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rand__(self, other):
+        return self._determine_type_with(other)(
+            int(other) & int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __or__(self, other):
         return self._determine_type_with(other)(
-            int(self) | (int(other)),
+            int(self) | int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __ror__(self, other):
+        return self._determine_type_with(other)(
+            int(other) | int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
     def __xor__(self, other):
         return self._determine_type_with(other)(
-            int(self) ^ (int(other)),
+            int(self) ^ int(other),
+            _check_overflow=overflow.ison(_nest_level=1),
+        )
+
+    def __rxor__(self, other):
+        return self._determine_type_with(other)(
+            int(other) ^ int(self),
             _check_overflow=overflow.ison(_nest_level=1),
         )
 
