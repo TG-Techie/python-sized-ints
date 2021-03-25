@@ -12,23 +12,31 @@ import functools
 # TODO: add check to make sure a _bit_width_ can de represented by the system, ie log2(sys.maxsize) = max _bit_width_
 # TODO: add uint for whole numbers
 
-__version__ = '0.1.2'
+__version__ = "0.1.3"
 
-__all__ = [ # uses a list so the auto genreated uX can be exported
-    'Unsigned', 'Signed', 'sized',
-    'overflow', 'OverflowError',
-    'tri', 'utri',
-    'bin', 'bitwidth'
+__all__ = [  # uses a list so the auto genreated uX can be exported
+    "Unsigned",
+    "Signed",
+    "sized",
+    "overflow",
+    "OverflowError",
+    "tri",
+    "utri",
+    "bin",
+    "bitwidth",
 ]
+
 
 class OverflowError(Exception):
     pass
 
+
 singleton = lambda cls: cls()
 
-T = TypeVar('T', bound='Base')
+T = TypeVar("T", bound="Base")
 
-def bin(num:object) -> str:
+
+def bin(num: object) -> str:
     """
     A zero padding aware verison of the builin bin function that converts ints
     to string representations of binary numbers.
@@ -36,53 +44,109 @@ def bin(num:object) -> str:
     global builtins, _SignedInt, _UnsignedInt
     if isinstance(num, _UnsignedInt):
         cls = type(num)
-        body = builtins.bin(num).lstrip('0b')
+        body = builtins.bin(num).lstrip("0b")
         width = cls._bit_width_
         # u0 returns only '0b'm this is for consistency's sake, no outlier cases
         return f"{cls.__name__}(0b{'0'*(width - len(body)) + body})"
     elif isinstance(num, _SignedInt):
         cls = type(num)
-        body = builtins.bin(num).lstrip('-0b')
+        body = builtins.bin(num).lstrip("-0b")
         width = cls._bit_width_ - 1
         return f"{cls.__name__}({'-0b' if num < 0 else '0b'}{'0'*(width - len(body)) + body})"
     else:
         return builtins.bin(num)
 
-def bitwidth(val:object) -> int:
+
+def bitwidth(val: object) -> int:
     assert isinstance(val, (_SizedInt, Signed, Unsigned))
     return val._bit_width_
 
+
 _binops = {
     # arith ops
-    '__add__', '__and__', '__divmod__', '__floor__',
-    '__floordiv__', '__lshift__','__mod__', '__mul__', '__or__', '__pow__',
-    '__radd__', '__rand__', '__rdivmod__', '__rfloordiv__', '__rlshift__',
-    '__rmod__', '__rmul__', '__ror__', '__rpow__', '__rrshift__',
-    '__rshift__', '__rsub__', '__rtruediv__', '__rxor__', '__sub__',
-    '__truediv__', '__xor__',
+    "__add__",
+    "__and__",
+    "__divmod__",
+    "__floor__",
+    "__floordiv__",
+    "__lshift__",
+    "__mod__",
+    "__mul__",
+    "__or__",
+    "__pow__",
+    "__radd__",
+    "__rand__",
+    "__rdivmod__",
+    "__rfloordiv__",
+    "__rlshift__",
+    "__rmod__",
+    "__rmul__",
+    "__ror__",
+    "__rpow__",
+    "__rrshift__",
+    "__rshift__",
+    "__rsub__",
+    "__rtruediv__",
+    "__rxor__",
+    "__sub__",
+    "__truediv__",
+    "__xor__",
     # logical ops:
-    '__lt__', '__ne__', '__ge__', '__gt__', '__le__', '__eq__'
+    "__lt__",
+    "__ne__",
+    "__ge__",
+    "__gt__",
+    "__le__",
+    "__eq__",
 }
 
 _binop_symbol = {
     # arith ops
-    '__add__' : '+', '__and__' : '&', '__floordiv__' : '//', '__lshift__' : '<<',
-    '__mod__' : '%', '__mul__' : '*', '__or__' : '|', '__pow__' : '**',
-    '__radd__' : '+', '__rand__' : '&', '__rfloordiv__' : '//', '__rlshift__' : '<<',
-    '__rmod__' : '%', '__rmul__' : '*', '__ror__' : '|',
-    '__rpow__' : '**', '__rrshift__' : '>>', '__rshift__' : '>>', '__rsub__' : '-',
-    '__rtruediv__' : '/', '__rxor__' : '^', '__sub__' : '-', '__truediv__' : '/',
-    '__xor__' : '^',
+    "__add__": "+",
+    "__and__": "&",
+    "__floordiv__": "//",
+    "__lshift__": "<<",
+    "__mod__": "%",
+    "__mul__": "*",
+    "__or__": "|",
+    "__pow__": "**",
+    "__radd__": "+",
+    "__rand__": "&",
+    "__rfloordiv__": "//",
+    "__rlshift__": "<<",
+    "__rmod__": "%",
+    "__rmul__": "*",
+    "__ror__": "|",
+    "__rpow__": "**",
+    "__rrshift__": ">>",
+    "__rshift__": ">>",
+    "__rsub__": "-",
+    "__rtruediv__": "/",
+    "__rxor__": "^",
+    "__sub__": "-",
+    "__truediv__": "/",
+    "__xor__": "^",
     # logical ops:
-    '__lt__' : '<', '__ne__' : '!=', '__ge__' : '>=',
-    '__gt__' : '>', '__le__' : '<=', '__eq__' : '=='
+    "__lt__": "<",
+    "__ne__": "!=",
+    "__ge__": ">=",
+    "__gt__": ">",
+    "__le__": "<=",
+    "__eq__": "==",
 }
 
 # need to do: __reduce_ex__, __reduce__, __round__,
 
-_uniops = {'__abs__', '__ceil__', '__invert__', '__index__',
-    '__neg__',  '__pos__', '__trunc__',
+_uniops = {
+    "__abs__",
+    "__ceil__",
+    "__invert__",
+    "__index__",
+    "__neg__",
+    "__pos__",
+    "__trunc__",
 }
+
 
 class _SizedInt(int):
 
@@ -99,7 +163,7 @@ class _SizedInt(int):
     def __new__(cls: Type[T], value=0, _check_overflow=False) -> T:
         global int, overflow
 
-        if __debug__: # make sure that _nest_level of ison is correct
+        if __debug__:  # make sure that _nest_level of ison is correct
             locals()[overflow._local_flag_name] = None
             # setting this to none means that there be an error if
             # .ison() reaches out too few levels
@@ -116,61 +180,63 @@ class _SizedInt(int):
     def __repr__(self):
         cls = type(self)
         return f"{cls.__name__}({int(self)})"
-        #return f"{'sized.'*cls._sized_auto_gened_}{cls.__name__}({int(self)})"
+        # return f"{'sized.'*cls._sized_auto_gened_}{cls.__name__}({int(self)})"
 
     def __init__(self, *_, **__):
         super().__init__()
 
     @classmethod
-    def _raise_on_overflow(cls: Type[T], src: object) -> T: # may raise
+    def _raise_on_overflow(cls: Type[T], src: object) -> T:  # may raise
         global _SizedInt
         if cls is _SizedInt:
             raise NotImplementedError("do not use a raw _SizedInt")
         # print(f"{src=}, {src < cls._min_value_ or src > cls._max_value_=}, {src < cls._min_value_=}, {src > cls._max_value_=}")
         if src < cls._min_value_ or src > cls._max_value_:
             raise OverflowError(
-                 f"{cls} ints can only represent values >= "
-                +f"{cls._min_value_} and <= {cls._max_value_}, got {src}"
+                f"{cls} ints can only represent values >= "
+                + f"{cls._min_value_} and <= {cls._max_value_}, got {src}"
             )
 
     @classmethod
     def _clip_overflow(cls: Type[T], src: int) -> int:
         return (src + cls._clip_offset_) % cls._clip_mod_ - cls._clip_offset_
 
-
     @classmethod
-    def tryfrom(cls: Type[T], src: object): # Result[T, str]
+    def tryfrom(cls: Type[T], src: object):  # Result[T, str]
         raise NotImplementedError(
             ".tryfrom(...) not implemented, will return an `envly.Result[...]`"
         )
 
     # generate operand methods
     for op in _uniops:
-        exec(f'''def {op}(self):
+        exec(
+            f"""def {op}(self):
                     return type(self)(int(self).{op}(),  _check_overflow=overflow.ison(_nest_level=1))
                     # cls = type(self)
                     # print(cls)
                     # return cls(int(self).{op}())
-             ''')
+             """
+        )
     else:
         del op
 
     for op in _binops:
-        exec(f'''def {op}(self, other):
+        exec(
+            f"""def {op}(self, other):
                     cls = type(self)
+                    # TODO: make able to auto cast for smaller sized of same sign-ed-ness
                     if type(other) not in (cls, int):
                         raise  TypeError(f"cannot {_binop_symbol.get(op, op.strip('_'))} a '{{type(other).__name__}}' to '{{cls.__name__}}', "\
                             f"be sure to cast using `{{cls.__name__}}.tryfrom({{other}})`"
                         )
                     return cls(int(self).{op}(int(other)), _check_overflow=overflow.ison(_nest_level=1))
-             ''')
+             """
+        )
     else:
         del op
 
 
-
 class _SignedInt(_SizedInt):
-
     def as_signed(self):
         return self
 
@@ -185,13 +251,13 @@ class _SignedInt(_SizedInt):
         signbit = u1(1 if self < 0 else 0)
         body = abs(self)
         if signbit == 1:
-            val = body - 1 # -1 -> 0 b/c abs(-1) -1 convs back to
+            val = body - 1  # -1 -> 0 b/c abs(-1) -1 convs back to
         else:
             val = body
-        return Unsigned(cls._bit_width_)(signbit<<(cls._bit_width_-1) + val)
+        return Unsigned(cls._bit_width_)(signbit << (cls._bit_width_ - 1) + val)
+
 
 class _UnsignedInt(_SizedInt):
-
     def as_signed(self):
         return self.twos()
 
@@ -202,15 +268,16 @@ class _UnsignedInt(_SizedInt):
         cls = type(self)
         self = int(self)
         assert isinstance(cls, Unsigned)
-        signbit = u1(self >> (cls._bit_width_ -1))
-        body = self & ~(1<<(cls._bit_width_ -1))
+        signbit = u1(self >> (cls._bit_width_ - 1))
+        body = self & ~(1 << (cls._bit_width_ - 1))
 
-        if signbit == 1: # convert from two's
-            val = body + 1 # 0 - > 1 -> 2, 2 -> 3 etc
+        if signbit == 1:  # convert from two's
+            val = body + 1  # 0 - > 1 -> 2, 2 -> 3 etc
         else:
             val = body
 
         return Signed(cls._bit_width_)((0, -1)[signbit] * val)
+
 
 # metaclasses to genrate any width int widths ate runtime
 class Signed(type):
@@ -223,22 +290,23 @@ class Signed(type):
         if width < 1:
             raise TypeError(f"uints cannot have negative width")
 
-        name = f'i{width}'
+        name = f"i{width}"
         if name in Signed._signed_int_types_:
-            raise TypeError(f"{name} already exists and cannot be created twice, use Signed[{width}]")
+            raise TypeError(
+                f"{name} already exists and cannot be created twice, use Signed[{width}]"
+            )
         else:
-            self = super().__new__(cls,
+            self = super().__new__(
+                cls,
                 name,
                 (_SignedInt,),
                 {
-                    '_bit_width_' : width,
-
-                    '_max_value_' :  int( 2**(width-1) -1),
-                    '_min_value_' : -int( 2**(width-1)   ),
-
-                    '_clip_mod_'    :  int(2**(width)),
-                    '_clip_offset_' :  int(2**(width-1)),
-                }
+                    "_bit_width_": width,
+                    "_max_value_": int(2 ** (width - 1) - 1),
+                    "_min_value_": -int(2 ** (width - 1)),
+                    "_clip_mod_": int(2 ** (width)),
+                    "_clip_offset_": int(2 ** (width - 1)),
+                },
             )
             Signed._signed_int_types_[name] = self
             return self
@@ -250,10 +318,10 @@ class Signed(type):
             existing[name] = cls(width)
         return existing[name]
 
-
-    def __repr__(self:type) -> str:
+    def __repr__(self: type) -> str:
         return f"<class '{self.__name__}'>"
         # return f"<class '{'sized.'*self._sized_auto_gened_}{self.__name__}'>"
+
 
 class Unsigned(type):
 
@@ -265,23 +333,24 @@ class Unsigned(type):
         if width < 0:
             raise TypeError(f"uints cannot have negative width")
 
-        name = f'u{width}'
+        name = f"u{width}"
         # check that this is the first time this width is being made
         if name in Unsigned._unsigned_int_types_:
-            raise TypeError(f"{name} already exists and cannot be created twice, use Unsigned[{width}]")
+            raise TypeError(
+                f"{name} already exists and cannot be created twice, use Unsigned[{width}]"
+            )
 
-        self = super().__new__(cls,
+        self = super().__new__(
+            cls,
             name,
             (_UnsignedInt,),
             {
-                '_bit_width_' : width,
-
-                '_max_value_' : int(2**width - 1),
-                '_min_value_' : int(0),
-
-                '_clip_mod_'    :  int(2**(width)),
-                '_clip_offset_' :  int(0),
-            }
+                "_bit_width_": width,
+                "_max_value_": int(2 ** width - 1),
+                "_min_value_": int(0),
+                "_clip_mod_": int(2 ** (width)),
+                "_clip_offset_": int(0),
+            },
         )
         Unsigned._unsigned_int_types_[name] = self
         return self
@@ -293,11 +362,11 @@ class Unsigned(type):
             existing[name] = cls(width)
         return existing[name]
 
-    def __repr__(self:type) -> str:
+    def __repr__(self: type) -> str:
         return f"<class '{self.__name__}'>"
 
     @staticmethod
-    def pack(*nums:'Unsigned') -> 'Unsigned':
+    def pack(*nums: "Unsigned") -> "Unsigned":
         """
         A function to take several unsigned integes and combine them into
         one larger number. For example Unsigned.pack(u3(0b101), u4(0011)) returns
@@ -307,8 +376,8 @@ class Unsigned(type):
 
         # format input
         # if the only input was a single iterable use that
-        if len(nums) == 1 and hasattr(nums[0], '__iter__'):
-            nums = tupel(nums[0])
+        if len(nums) == 1 and hasattr(nums[0], "__iter__"):
+            nums = tuple(nums[0])
 
         val = 0
         width = 0
@@ -316,16 +385,16 @@ class Unsigned(type):
             assert isinstance(num, _UnsignedInt), f"found {type(num)}"
             numcls = type(num)
             assert isinstance(numcls, Unsigned), (
-                  "all inputs must be unsigned integers, "
-                +f"found item at index {index} was a {numcls}"
+                "all inputs must be unsigned integers, "
+                + f"found item at index {index} was a {numcls}"
             )
             val = (val << numcls._bit_width_) + int(num)
             width += numcls._bit_width_
-            #print(width, bin(Unsigned(width)(val)))
-        return Unsigned(width)(val)
+            # print(width, bin(Unsigned(width)(val)))
+        return Unsigned[width](val)
 
     @staticmethod
-    def unpack(source: Union[int, 'Unsigned'], into: tuple) -> Tuple['Unsigned', ...]:
+    def unpack(source: Union[int, "Unsigned"], into: tuple) -> Tuple["Unsigned", ...]:
         """
         Takes an integer (int or Unsigned) and breaks it into smaller uints.
         For example Unsigned.unpack(u7(0b1010011), (u3, u2, u2)) would return
@@ -352,18 +421,18 @@ class Unsigned(type):
             elif src_width < sum_width:
                 unpack_target = tuple(cls.__name__ for cls in into)
                 raise TypeError(
-                      "cannot unpack mis-mathched unsigned integer widths, "
-                    +f"u{src_width} -> {unpack_target} (ie {src_width} -> {sum_width}).\n"
-                    +f"either balance the widths or cast the source number to a "
-                    +f"plain int: `Unsigned.unpack(<{intcls.__name__}>, {unpack_target})`"
+                    "cannot unpack mis-mathched unsigned integer widths, "
+                    + f"u{src_width} -> {unpack_target} (ie {src_width} -> {sum_width}).\n"
+                    + f"either balance the widths or cast the source number to a "
+                    + f"plain int: `Unsigned.unpack(<{intcls.__name__}>, {unpack_target})`"
                 )
             elif src_width > sum_width and ... not in into:
                 unpack_target = tuple(cls.__name__ for cls in into)
                 raise TypeError(
-                      "cannot unpack mis-mathched unsigned integer widths, "
-                    +f"u{src_width} -> {unpack_target} (ie {src_width} -> {sum_width}).\n"
-                    +f"either balance the widths or add a `...` to the unpack template: "
-                    +f"`Unsigned.unpack(<{intcls.__name__}>, {('...',)+unpack_target})`"
+                    "cannot unpack mis-mathched unsigned integer widths, "
+                    + f"u{src_width} -> {unpack_target} (ie {src_width} -> {sum_width}).\n"
+                    + f"either balance the widths or add a `...` to the unpack template: "
+                    + f"`Unsigned.unpack(<{intcls.__name__}>, {('...',)+unpack_target})`"
                 )
 
         if into[0] is not ... and ... in into:
@@ -372,9 +441,7 @@ class Unsigned(type):
             )
 
         if not isinstance(source, _UnsignedInt) and ... in into:
-            raise ValueError(
-                f"... can only be used with unsigned ints, got {intcls}"
-            )
+            raise ValueError(f"... can only be used with unsigned ints, got {intcls}")
 
         chunks = []
         val = int(source)
@@ -382,28 +449,27 @@ class Unsigned(type):
             if cls is ...:
                 break
             width = cls._bit_width_
-            chunks.insert(0, cls(val & (2**width -1)))
+            chunks.insert(0, cls(val & (2 ** width - 1)))
             val = val >> width
 
         return tuple(chunks)
 
-class overflow():
 
+class overflow:
 
-    _local_flag_name = '..sized in overflow flags..'
+    _local_flag_name = "..sized in overflow flags.."
     # this is the key used for
     # it is invisible in locals() call.
 
     def __init__(self, flag):
         self.flag = flag
 
-
-    def _get_locals(*, nest_level:int):
+    def _get_locals(*, nest_level: int):
         """
         nest_level is the next level fo the call site,
         0 is the scope of the call site, 1 would be one scope outside of that
         """
-        frame = sys._getframe(1+nest_level)
+        frame = sys._getframe(1 + nest_level)
         return frame.f_locals
 
     def __enter__(self, *args, **kwargs):
@@ -418,23 +484,23 @@ class overflow():
         lcls = overflow._get_locals(nest_level=1)
         lcls[overflow._local_flag_name].pop(-1)
 
-    def ison(*_, _nest_level:int=0) -> bool:
+    def ison(*_, _nest_level: int = 0) -> bool:
         global overflow
-        lcls = overflow._get_locals(nest_level=1+_nest_level)
+        lcls = overflow._get_locals(nest_level=1 + _nest_level)
         if overflow._local_flag_name in lcls:
             flags = lcls[overflow._local_flag_name]
             return flags[-1] if len(flags) else False
         else:
             return False
 
-    def isoff(*_, _nest_level:int=0) -> bool:
+    def isoff(*_, _nest_level: int = 0) -> bool:
         # uses *_ so there isn't any extra call nesting from static/classmethod
         global overflow
-        return not overflow.ison(_nest_level=1+_nest_level)
+        return not overflow.ison(_nest_level=1 + _nest_level)
 
 
 @singleton
-class sized():
+class sized:
     # used an an autop generator for int types on import
     # (is added to sys.modules below)
 
@@ -455,18 +521,22 @@ class sized():
         else:
             prefix, body = name[0], name[1:]
             # find singedness
-            if prefix == 'i':
+            if prefix == "i":
                 kind = Signed
-            elif prefix == 'u':
+            elif prefix == "u":
                 kind = Unsigned
             else:
-                raise NameError(f"sized ints' names must start with 'i' or 'u', found '{prefix}' in '{name}'")
+                raise NameError(
+                    f"sized ints' names must start with 'i' or 'u', found '{prefix}' in '{name}'"
+                )
 
             # find width
-            if body.isnumeric() and '.' not in body:
+            if body.isnumeric() and "." not in body:
                 width = int(body)
             else:
-                raise NameError(f"sized ints must have whole number widths, found '{body}'  in '{name}'")
+                raise NameError(
+                    f"sized ints must have whole number widths, found '{body}'  in '{name}'"
+                )
 
             cls = kind(width)
             return cls
@@ -479,6 +549,7 @@ class tri(_SizedInt):
 
     _clip_mod_ = 3
     _clip_offset_ = 1
+
 
 class utri(_SizedInt):
     _bit_width_ = None
@@ -501,6 +572,6 @@ for width in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
     locals()[icls.__name__] = icls
 
 u0 = Unsigned[0]
-__all__.append('u0')
+__all__.append("u0")
 
-sys.modules['sized'] = sized
+sys.modules["sized"] = sized
